@@ -1,8 +1,19 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import Layout from "../utils/Layout";
+import Dashboard from "../pages/Dashboard";
+import Groups from "../pages/Groups";
+
 function App() {
   return (
-    <div>
-      
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="groups" element={<Groups />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
