@@ -7,7 +7,7 @@ import { SearchIcon } from "../assets/Icons/SearchIcon";
 const Navbar = () => {
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
-      <div className="max-w-screen-xl grid grid-cols-2 md:grid-cols-6 items-center justify-between mx-auto p-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 items-center justify-between mx-auto p-4 pl-7">
         <Link
           to="/dashboard"
           className="flex items-center space-x-3 rtl:space-x-reverse col-span-1"
