@@ -1,4 +1,5 @@
 import { ReactElement, useState } from "react";
+import { Link } from "react-router-dom";
 
 const Sidebar = () => {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -125,18 +126,20 @@ const SidebarItem = ({
   setActivePage,
 }: SidebarItemProps) => {
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => setActivePage(page)}
-      className={`flex relative items-center w-full p-2 rounded-lg text-start leading-tight hover:bg-green-50 hover:bg-opacity-80 outline-none ${
-        active
-          ? "text-green-600 after:content-[''] after:absolute after:right-0 after:top-0 after:h-full after:w-[5px] after:bg-green-500 after:rounded-l-lg"
-          : ""
-      }`}
-    >
-      <div className="mr-4">{svg}</div>
-      {page}
-    </div>
+    <Link to={`/${page.toLowerCase()}`}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setActivePage(page)}
+        className={`flex relative items-center w-full p-2 rounded-lg text-start leading-tight hover:bg-green-50 hover:bg-opacity-80 outline-none ${
+          active
+            ? "text-green-600 after:content-[''] after:absolute after:right-0 after:top-0 after:h-full after:w-[5px] after:bg-green-500 after:rounded-l-lg"
+            : ""
+        }`}
+      >
+        <div className="mr-4">{svg}</div>
+        {page}
+      </div>
+    </Link>
   );
 };
