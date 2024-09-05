@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "../utils/Layout";
 import Dashboard from "../pages/Dashboard";
 import Groups from "../pages/Groups";
+import Friends from "../pages/Friends";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="friends" element={<Friends />} />
           <Route path="groups" element={<Groups />} />
         </Route>
       </Routes>
