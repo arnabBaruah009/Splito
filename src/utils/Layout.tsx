@@ -9,7 +9,9 @@ const Layout = () => {
       <Navbar />
       <section className="flex">
         <Sidebar />
-        <Outlet />
+        <div className="p-10 bg-slate-200 flex-grow overflow-y-auto">
+          <Outlet />
+        </div>
       </section>
     </div>
   );
