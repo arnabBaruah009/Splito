@@ -1,8 +1,10 @@
-import { ReactElement, useState } from "react";
+import { ReactElement } from "react";
 import { Link } from "react-router-dom";
 
+import { usePage } from "../hooks/usePage";
+
 const Sidebar = () => {
-  const [activePage, setActivePage] = useState("Dashboard");
+  const { activePage, setActivePage } = usePage();
   const Pages = [
     {
       svg: (

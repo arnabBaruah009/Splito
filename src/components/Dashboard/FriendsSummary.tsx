@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 
+import { usePage } from "../../hooks/usePage";
 import { SummaryItem } from "./";
 
 const FriendsSummary = () => {
+  const { setActivePage } = usePage();
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <p>Friends summary</p>
@@ -17,6 +19,7 @@ const FriendsSummary = () => {
               <Link
                 to="/friends"
                 className="text-slate-500 hover:text-slate-400"
+                onClick={() => setActivePage("Friends")}
               >
                 View all
               </Link>
@@ -33,6 +36,7 @@ const FriendsSummary = () => {
               <Link
                 to="/friends"
                 className="text-slate-500 hover:text-slate-400"
+                onClick={() => setActivePage("Friends")}
               >
                 View all
               </Link>
@@ -49,6 +53,7 @@ const FriendsSummary = () => {
               <Link
                 to="/friends"
                 className="text-slate-500 hover:text-slate-400"
+                onClick={() => setActivePage("Friends")}
               >
                 View all
               </Link>
