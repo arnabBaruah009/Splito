@@ -50,7 +50,7 @@ const Group = () => {
       </div>
       <div className="text-left pl-4 max-w-max">
         <Link
-          to="/friends"
+          to="/user/friends"
           className="text-slate-500 hover:text-slate-400 cursor-pointe"
         >
           View all

@@ -9,7 +9,7 @@ const Navbar = () => {
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
       <div className="grid grid-cols-2 md:grid-cols-6 items-center justify-between mx-auto p-4 pl-7">
         <Link
-          to="/dashboard"
+          to="/user/dashboard"
           className="flex items-center space-x-3 rtl:space-x-reverse col-span-1"
         >
           <img src={Logo} className="h-8" alt="Splito Logo" />

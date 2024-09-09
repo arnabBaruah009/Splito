@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import Layout from "../utils/Layout";
@@ -12,9 +12,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to={"/login"} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Layout />}>
+        <Route path="/user" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="friends" element={<Friends />} />
           <Route path="groups" element={<Groups />} />

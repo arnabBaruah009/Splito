@@ -17,7 +17,7 @@ const GroupsSummary = () => {
             <SummaryItem color="warning" />
             <div className="text-center py-2">
               <Link
-                to="/friends"
+                to="/user/friends"
                 className="text-slate-500 hover:text-slate-400"
                 onClick={() => setActivePage("Friends")}
               >
@@ -34,7 +34,7 @@ const GroupsSummary = () => {
             <SummaryItem color="success" />
             <div className="text-center py-2">
               <Link
-                to="/friends"
+                to="/user/friends"
                 className="text-slate-500 hover:text-slate-400"
                 onClick={() => setActivePage("Friends")}
               >
