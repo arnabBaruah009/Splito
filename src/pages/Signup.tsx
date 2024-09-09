@@ -5,6 +5,7 @@ import { Input } from "@nextui-org/react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { useUser } from "../hooks/useUser";
 
 import EyeSlashFilledIcon from "../components/Icons/EyeSlashFilledIcon";
 import EyeFilledIcon from "../components/Icons/EyeFilledIcon";
@@ -26,6 +27,7 @@ const Signup = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { setUser } = useUser();
   //   const { setCurrentUser } = useContext(AuthContext);
   //   const cookies = new Cookies();
 
@@ -60,7 +62,16 @@ const Signup = () => {
         expenses: [],
         friends: [],
       });
-
+      setUser({
+        uid: res.user.uid,
+        displayName: values.name,
+        email: values.email,
+        totalLent: 0,
+        totalBorrowed: 0,
+        groups: [],
+        expenses: [],
+        friends: [],
+      });
       setValues({
         name: "",
         email: "",
@@ -68,7 +79,7 @@ const Signup = () => {
         confirmPassword: "",
       });
       toast.success("Welcome");
-      navigate("/dashboard");
+      navigate("/user/dashboard");
     } catch (error: any) {
       if (error.code == "auth/email-already-in-use") {
         toast.error("Email already in use");
