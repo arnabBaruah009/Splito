@@ -1,10 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Input, Avatar } from "@nextui-org/react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import Cookies from "universal-cookie";
 
 import Logo from "../assets/Logo.png";
 import { SearchIcon } from "../assets/Icons/SearchIcon";
+import { auth } from "../firebase";
 
 const Navbar = () => {
+  const cookies = new Cookies();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/login");
+      }
+    });
+    return unsub;
+  }, []);
+
+  const handleLogout = () => {
+    cookies.remove("splito-500K-bSnjthd6R34VKoZS2B3", { path: "/" });
+    signOut(auth);
+  };
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
       <div className="grid grid-cols-2 md:grid-cols-6 items-center justify-between mx-auto p-4 pl-7">
@@ -104,6 +123,23 @@ const Navbar = () => {
             color="success"
             src="https://i.pravatar.cc/150?u=a04258114e29026302d"
           />
+          <button
+            className="flex items-center text-indigo-700 border border-indigo-600 hover:bg-indigo-200 py-2 px-4 gap-2 rounded"
+            onClick={handleLogout}
+          >
+            <span>Sign out</span>
+            <svg
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className="w-4 h-4 ml-2"
+            >
+              <path d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </button>
           <div className="relative mt-3 md:hidden">
             <Input
               isClearable
