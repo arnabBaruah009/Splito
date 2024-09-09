@@ -4,6 +4,7 @@ import { ChangeEvent, useState } from "react";
 import { Input } from "@nextui-org/react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import Cookies from "universal-cookie";
 import { auth, db } from "../firebase";
 import { useUser } from "../hooks/useUser";
 
@@ -28,8 +29,7 @@ const Signup = () => {
   const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const navigate = useNavigate();
   const { setUserID } = useUser();
-  //   const { setCurrentUser } = useContext(AuthContext);
-  //   const cookies = new Cookies();
+  const cookies = new Cookies();
 
   // Function to handle submit
   const handleSubmit = async () => {
@@ -48,7 +48,10 @@ const Signup = () => {
         values.email,
         values.password
       );
-
+      cookies.set("splito-bSnjthd6R34VKoZS2B3", values.email, {
+        path: "/",
+        expires: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      });
       await updateProfile(res.user, {
         displayName: values.name,
       });

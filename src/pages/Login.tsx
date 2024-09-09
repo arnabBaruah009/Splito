@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { ChangeEvent, useState } from "react";
 import { Input } from "@nextui-org/react";
-import { auth, db } from "../firebase";
+import Cookies from "universal-cookie";
+import { auth } from "../firebase";
 import { useUser } from "../hooks/useUser";
 
 import EyeSlashFilledIcon from "../components/Icons/EyeSlashFilledIcon";
@@ -22,8 +23,7 @@ const Login = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const navigate = useNavigate();
   const { setUserID } = useUser();
-  //   const { setCurrentUser } = useContext(AuthContext);
-  //   const cookies = new Cookies();
+  const cookies = new Cookies();
 
   // Function to handle submit
   const handleSubmit = async () => {
@@ -39,6 +39,10 @@ const Login = () => {
         values.password
       ).then(() => {
         setUserID(values.email);
+        cookies.set("splito-500K-bSnjthd6R34VKoZS2B3", values.email, {
+          path: "/",
+          expires: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+        });
       });
 
       setValues({

@@ -128,7 +128,7 @@ const SidebarItem = ({
   setActivePage,
 }: SidebarItemProps) => {
   return (
-    <Link to={`/${page.toLowerCase()}`}>
+    <Link to={`/user/${page.toLowerCase()}`}>
       <div
         role="button"
         tabIndex={0}

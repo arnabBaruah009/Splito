@@ -7,6 +7,7 @@ import Groups from "../pages/Groups";
 import Friends from "../pages/Friends";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import PersistentUser from "../utils/Persistent_User";
 
 function App() {
   return (
@@ -15,10 +16,12 @@ function App() {
         <Route path="/" element={<Navigate to={"/login"} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/user" element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="friends" element={<Friends />} />
-          <Route path="groups" element={<Groups />} />
+        <Route element={<PersistentUser />}>
+          <Route path="/user" element={<Layout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="friends" element={<Friends />} />
+            <Route path="groups" element={<Groups />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster />
