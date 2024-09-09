@@ -6,6 +6,6 @@ export const useUser = () => {
   if (!context) {
     throw new Error("User is null");
   }
-  const { user, setUser } = context;
-  return { user, setUser };
+  const { user, setUserID } = context;
+  return { user, setUserID };
 };

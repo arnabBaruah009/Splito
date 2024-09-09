@@ -27,7 +27,7 @@ const Signup = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { setUserID } = useUser();
   //   const { setCurrentUser } = useContext(AuthContext);
   //   const cookies = new Cookies();
 
@@ -62,16 +62,7 @@ const Signup = () => {
         expenses: [],
         friends: [],
       });
-      setUser({
-        uid: res.user.uid,
-        displayName: values.name,
-        email: values.email,
-        totalLent: 0,
-        totalBorrowed: 0,
-        groups: [],
-        expenses: [],
-        friends: [],
-      });
+      setUserID(values.email);
       setValues({
         name: "",
         email: "",

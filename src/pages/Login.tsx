@@ -1,7 +1,6 @@
 import { toast } from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { ChangeEvent, useState } from "react";
 import { Input } from "@nextui-org/react";
 import { auth, db } from "../firebase";
@@ -9,7 +8,6 @@ import { useUser } from "../hooks/useUser";
 
 import EyeSlashFilledIcon from "../components/Icons/EyeSlashFilledIcon";
 import EyeFilledIcon from "../components/Icons/EyeFilledIcon";
-import { UserInfo } from "../types";
 
 type FormValues = {
   email: string;
@@ -23,7 +21,7 @@ const Login = () => {
   });
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { setUserID } = useUser();
   //   const { setCurrentUser } = useContext(AuthContext);
   //   const cookies = new Cookies();
 
@@ -39,16 +37,8 @@ const Login = () => {
         auth,
         values.email,
         values.password
-      ).then(async (userInfo) => {
-        if (userInfo.user.email) {
-          const user = await getDoc(doc(db, "users", userInfo.user.email));
-          if (user.exists()) {
-            const userData = user.data() as UserInfo; // Cast the document data to UserInfo type
-            setUser(userData);
-          } else {
-            console.log("No such document!");
-          }
-        }
+      ).then(() => {
+        setUserID(values.email);
       });
 
       setValues({
