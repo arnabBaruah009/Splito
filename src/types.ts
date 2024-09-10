@@ -26,9 +26,9 @@ export type UserInfo = {
   email: string;
   totalLent: number;
   totalBorrowed: number;
-  groups: [];
-  expenses: [];
-  friends: [];
+  groups: string[];
+  expenses: string[];
+  friends: string[];
 };
 
 /*user
