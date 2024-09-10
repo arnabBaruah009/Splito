@@ -31,6 +31,23 @@ export type UserInfo = {
   friends: string[];
 };
 
+// Expense record type
+export type Expense = {
+  amount: number;
+  paidBy: string;
+}
+
+// Group Info type
+export type GroupInfo = {
+  groupName: string;
+  createdBy: string;
+  summary: Expense[];
+  groupSpending: number;
+  members: string[];
+  totalSpent: number;
+  activities: ActivityInfo[]
+}
+
 /*user
 : 
 _UserImpl
