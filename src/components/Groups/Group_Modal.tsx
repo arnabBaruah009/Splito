@@ -5,21 +5,61 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-
 } from "@nextui-org/react";
 import { CheckboxGroup, Checkbox } from "@nextui-org/react";
-import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  writeBatch,
+  doc,
+  arrayUnion,
+  updateDoc,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from "../../firebase";
+import { useUser } from "../../hooks/useUser";
 
-type props = {
+type GroupModalprops = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-const GROUP_MODAL = ({ isOpen, onClose }: props) => {
-  const [selected, setSelected] = useState<string[]>([
-    "buenos-aires",
-    "sydney",
-  ]);
+const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
+  const { user } = useUser();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState<string>("");
+  const batchUpdate = async (id: string) => {
+    // Get a new write batch
+    const batch = writeBatch(db);
+
+    // Update the population of 'SF'
+    selected.forEach((user) => {
+      const sfRef = doc(db, "users", user);
+      batch.update(sfRef, { groups: arrayUnion(id) });
+    });
+
+    // Commit the batch
+    await batch.commit();
+  };
+
+  useEffect(() => {});
+  const createGroup = async () => {
+    try {
+      const ref = await addDoc(collection(db, "groups"), {
+        groupName: groupName,
+        members: [...selected, user?.email],
+        createdBy: user?.email,
+        expenses: [],
+        totalSpent: [],
+        groupSpending: 0,
+      });
+      batchUpdate(ref.id);
+      await updateDoc(doc(db, "users", user?.email || ""), {
+        groups: arrayUnion(ref.id),
+      });
+      onClose();
+    } catch (error) {}
+  };
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
       <ModalContent>
@@ -37,18 +77,22 @@ const GROUP_MODAL = ({ isOpen, onClose }: props) => {
                   className=" border-b border-gray-300 outline-0 text-gray-900 text-sm block w-full py-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                   placeholder="Type a name"
                   required
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
                 />
               </div>
               <div>
                 <p className="mb-2">Add members</p>
                 <CheckboxGroup
-                  color="warning"
+                  color="success"
                   value={selected}
                   onValueChange={setSelected}
                 >
-                  <Checkbox value="buenos-aires">Buenos Aires</Checkbox>
-                  <Checkbox value="sydney">Sydney</Checkbox>
-                  <Checkbox value="san-francisco">San Francisco</Checkbox>
+                  {user?.friends.map((item) => (
+                    <Checkbox key={item} value={item}>
+                      {item}
+                    </Checkbox>
+                  ))}
                 </CheckboxGroup>
               </div>
             </ModalBody>
@@ -56,8 +100,8 @@ const GROUP_MODAL = ({ isOpen, onClose }: props) => {
               <Button color="danger" variant="light" onPress={onClose}>
                 Close
               </Button>
-              <Button color="primary" onPress={onClose}>
-                Action
+              <Button color="primary" onPress={createGroup}>
+                Create
               </Button>
             </ModalFooter>
           </>
