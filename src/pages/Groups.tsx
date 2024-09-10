@@ -1,9 +1,17 @@
 import { useDisclosure } from "@nextui-org/react";
+import { useEffect, useState } from "react";
 import Group from "../components/Groups/Group";
 import GROUP_MODAL from "../components/Groups/Group_Modal";
+import { useUser } from "../hooks/useUser";
 
 const Groups = () => {
+  const { user } = useUser();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [groups, setGroups] = useState<string[]>([]);
+
+  useEffect(() => {
+    setGroups(user?.groups || []);
+  }, [user?.groups]);
 
   return (
     <div className="w-full h-full overflow-y-auto">
@@ -19,9 +27,9 @@ const Groups = () => {
       </div>
 
       <div className="grid grid-cols-2 grid-rows-auto gap-6">
-        <Group />
-        <Group />
-        <Group />
+        {groups.map((groupID) => (
+          <Group key={groupID} id={groupID} />
+        ))}
       </div>
       <GROUP_MODAL isOpen={isOpen} onClose={onClose} />
     </div>
