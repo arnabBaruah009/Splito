@@ -47,11 +47,12 @@ const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
     try {
       const ref = await addDoc(collection(db, "groups"), {
         groupName: groupName,
-        members: [...selected, user?.email],
         createdBy: user?.email,
-        expenses: [],
-        totalSpent: [],
+        summary: [],
         groupSpending: 0,
+        members: [...selected, user?.email],
+        totalSpent: [],
+        activities: [],
       });
       batchUpdate(ref.id);
       await updateDoc(doc(db, "users", user?.email || ""), {
