@@ -7,8 +7,8 @@ import Cookies from "universal-cookie";
 import { auth } from "../firebase";
 import { useUser } from "../hooks/useUser";
 
-import EyeSlashFilledIcon from "../components/Icons/EyeSlashFilledIcon";
-import EyeFilledIcon from "../components/Icons/EyeFilledIcon";
+import EyeSlashFilledIcon from "../assets/Icons/EyeSlashFilledIcon";
+import EyeFilledIcon from "../assets/Icons/EyeFilledIcon";
 
 type FormValues = {
   email: string;
