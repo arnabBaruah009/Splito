@@ -7,6 +7,7 @@ import Groups from "../pages/Groups";
 import Friends from "../pages/Friends";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import Detailed_Group from "../pages/Detailed_Group";
 import PersistentUser from "../utils/Persistent_User";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="friends" element={<Friends />} />
             <Route path="groups" element={<Groups />} />
+            <Route path="groups/:id" element={<Detailed_Group />} />
           </Route>
         </Route>
       </Routes>
