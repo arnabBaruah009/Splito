@@ -33,20 +33,20 @@ export type UserInfo = {
 
 // Expense record type
 export type Expense = {
-  amount: number;
-  paidBy: string;
-}
+  totalPaid: number;
+  totalShare: number;
+};
 
 // Group Info type
 export type GroupInfo = {
   groupName: string;
   createdBy: string;
-  summary: Expense[];
+  summary: { [memberEmail: string]: Expense };
   groupSpending: number;
   members: string[];
   totalSpent: number;
-  activities: ActivityInfo[]
-}
+  activities: ActivityInfo[];
+};
 
 /*user
 : 

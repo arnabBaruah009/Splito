@@ -1,7 +1,7 @@
 import { useDisclosure } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import Group from "../components/Groups/Group";
-import GROUP_MODAL from "../components/Groups/Group_Modal";
+import GROUP_MODAL from "../components/Groups/AddGroup_Modal";
 import { useUser } from "../hooks/useUser";
 
 const Groups = () => {
