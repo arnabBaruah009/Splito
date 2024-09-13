@@ -1,11 +1,8 @@
 import { useDisclosure } from "@nextui-org/react";
-import Group from "../components/Groups/Group";
 import FRIEND_MODAL from "../components/Friends/Friends_Modal";
 
 const Friends = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  console.log("Friends component`");
-
   return (
     <div className="w-full h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
@@ -21,9 +18,6 @@ const Friends = () => {
       </div>
 
       <div className="grid grid-cols-2 grid-rows-auto gap-6">
-        <Group />
-        <Group />
-        <Group />
       </div>
       <FRIEND_MODAL isOpen={isOpen} onClose={onClose} />
     </div>
