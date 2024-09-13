@@ -1,5 +1,5 @@
 import { useDisclosure } from "@nextui-org/react";
-import FRIEND_MODAL from "../components/Friends/Friends_Modal";
+import FRIEND_MODAL from "../components/Friends/AddFriends_Modal";
 
 const Friends = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
