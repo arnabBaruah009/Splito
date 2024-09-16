@@ -1,25 +1,16 @@
 import { Timestamp } from "firebase/firestore";
 
 // Group activity types
-interface BaseActivityInfo {
+export type ActivityInfo = {
   id: string;
-  paidBy: string;
+  paidByEmail: string;
+  paidByName: string;
   amount: number;
-  type: "borrowed" | "lent";
+  type: "borrowed" | "lent" | "uninvolved";
   date: string;
-}
-
-interface BorrowedActivity extends BaseActivityInfo {
   borrowed: number;
-  lent?: never;
-}
-
-interface LentActivity extends BaseActivityInfo {
   lent: number;
-  borrowed?: never;
 }
-
-export type ActivityInfo = BorrowedActivity | LentActivity;
 
 // User info type
 export type UserInfo = {
@@ -47,13 +38,14 @@ export type GroupInfo = {
   groupSpending: number;
   members: string[];
   totalSpent: number;
-  activities: ActivityInfo[];
+  activities: string[];
 };
 
 // Expense info type
 export type ExpenseInfo = {
   desc: string;
-  paidBy: string;
+  paidByEmail: string;
+  paidByName: string;
   amount: number;
   groupID: string;
   split: { [memberEmail: string]: Expense };
