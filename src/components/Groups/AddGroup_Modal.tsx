@@ -46,19 +46,16 @@ const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
   useEffect(() => {});
   const createGroup = async () => {
     const summary = selected.reduce((acc, email) => {
-      acc[email] = { totalPaid: 0, totalShare: 0 };
+      acc[email.replace(/\./g, "_")] = { totalPaid: 0, totalShare: 0 };
       return acc;
     }, {} as { [email: string]: { totalPaid: number; totalShare: number } });
     try {
       const ref = await addDoc(collection(db, "groups"), {
         groupName: groupName,
         createdBy: user?.email,
-        summary: {
-          ...summary,
-          [user?.email || ""]: { totalPaid: 0, totalShare: 0 },
-        },
+        summary: summary,
         groupSpending: 0,
-        members: [...selected, user?.email],
+        members: [...selected],
         totalSpent: 0,
         activities: [],
       } as GroupInfo);
@@ -69,6 +66,11 @@ const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
       onClose();
     } catch (error) {}
   };
+
+  useEffect(() => {
+    setSelected([user?.email || ""]);
+  }, []);
+
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
       <ModalContent>
@@ -98,7 +100,11 @@ const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
                   onValueChange={setSelected}
                 >
                   {user?.friends.map((item) => (
-                    <Checkbox key={item} value={item}>
+                    <Checkbox
+                      key={item}
+                      value={item}
+                      isDisabled={item === user.email}
+                    >
                       {item}
                     </Checkbox>
                   ))}
