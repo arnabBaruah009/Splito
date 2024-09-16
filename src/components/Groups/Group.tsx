@@ -59,7 +59,7 @@ const Group = ({ id }: { id: string }) => {
       <div className="text-left pl-4 max-w-max">
         <Link
           to={`/user/groups/${id}`}
-          className="text-slate-500 hover:text-slate-400 cursor-pointe"
+          className="text-slate-500 hover:text-slate-400 cursor-pointer"
         >
           View all
         </Link>
