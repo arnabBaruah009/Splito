@@ -1,12 +1,11 @@
 import ActivityItem from "./ActivityItem";
-import { ActivityInfo } from "../../types";
 
-const Activity = ({ activities }: { activities: ActivityInfo[] }) => {
+const Activity = ({ activities }: { activities: string[] }) => {
   return (
     <div className="p-4 w-full mx-auto flow-root">
       <ul role="list" className="-mb-8">
         {activities?.map((activity, index) => {
-          return <ActivityItem key={activity.id} activity={activity} end={index===activities.length-1}/>;
+          return <ActivityItem key={activity} id={activity} end={index===activities.length-1}/>;
         })}
       </ul>
     </div>
