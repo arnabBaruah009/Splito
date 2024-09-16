@@ -14,6 +14,7 @@ const PersistentUser = () => {
         return navigate("/login");
       }
       setUserID(userID);
+      navigate("/user/dashboard");
     };
     !user && getUser();
   }, []);

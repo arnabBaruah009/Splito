@@ -5,9 +5,9 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Chip,
+  Input,
+  User,
 } from "@nextui-org/react";
-import { CheckboxGroup, Checkbox } from "@nextui-org/react";
 import { Tabs, Tab, Card, CardBody } from "@nextui-org/react";
 import {
   addDoc,
@@ -16,60 +16,365 @@ import {
   doc,
   arrayUnion,
   updateDoc,
+  increment,
+  serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { db } from "../../firebase";
 import { useUser } from "../../hooks/useUser";
-import { GroupInfo } from "../../types";
+import { ExpenseInfo, GroupInfo } from "../../types";
 
 type GroupModalprops = {
   isOpen: boolean;
   onClose: () => void;
+  id: string;
+  groupInfo: GroupInfo;
 };
 
 type SplitInfo = {
-  [email: string]: number;
+  unequally: {
+    [email: string]: number;
+  };
+  percentage: {
+    [email: string]: number;
+  };
 };
 
-const EXPENSE_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
+const EXPENSE_MODAL = ({ isOpen, onClose, id, groupInfo }: GroupModalprops) => {
   const { user } = useUser();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [tab, setTab] = useState<string>("equally");
   const [expenseDesp, setExpenseDesp] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<number>();
-  const [splitInfo, setSplitInfo] = useState<SplitInfo>({});
+  const [splitInfo, setSplitInfo] = useState<SplitInfo>({
+    unequally: {},
+    percentage: {},
+  });
   const [remainingAmount, setRemainingAmount] = useState<number>();
+  const [remainingPercent, setRemainingPercent] = useState<number>();
+
+  // Tab change trigger
   const handleTabs = (key: string) => {
+    setTab(key);
     switch (key) {
       case "equally":
-        setSelected([...(user?.friends || []), user?.email || ""]);
         break;
 
       case "unequally":
-        setSelected([]);
+        setRemainingAmount(totalAmount);
+        break;
+
+      case "percentages":
+        setRemainingPercent(100);
         break;
     }
   };
 
+  // To split expense unequally
   const handleSplitUnequally = (email: string, amount: number) => {
-    setSplitInfo((prev) => {
-      return {
-        ...prev,
+    setSplitInfo((prev) => ({
+      unequally: {
+        ...prev.unequally,
         [email]: amount,
-      };
-    });
+      },
+      percentage: {},
+    }));
   };
 
+  // To split expense by percentage
+  const handleSplitPercentage = (email: string, amount: number) => {
+    setSplitInfo((prev) => ({
+      unequally: {},
+      percentage: {
+        ...prev.percentage,
+        [email]: amount,
+      },
+    }));
+  };
+
+  // Update balance
   useEffect(() => {
     setRemainingAmount((prev) => {
-      const total = Object.keys(splitInfo).reduce((acc, key) => {
-        return acc + splitInfo[key];
+      const total = Object.keys(splitInfo.unequally).reduce((acc, key) => {
+        return acc + (splitInfo.unequally[key] || 0);
       }, 0);
       return (totalAmount || 0) - total;
     });
-  }, [splitInfo]);
+    setRemainingPercent((prev) => {
+      const total = Object.keys(splitInfo.percentage).reduce((acc, key) => {
+        return acc + (splitInfo.percentage[key] || 0);
+      }, 0);
+      return 100 - total;
+    });
+  }, [splitInfo, totalAmount]);
 
+  // Add expense to database
   const createExpense = () => {
-    console.log(splitInfo);
+    if (!totalAmount || totalAmount === 0) {
+      toast.error("Please enter amount!!");
+      return;
+    }
+    const expenseInfo: ExpenseInfo = {
+      desc: expenseDesp,
+      paidBy: user?.email || "",
+      amount: totalAmount || 0,
+      groupID: id,
+      split: {},
+      timestamp: serverTimestamp() as Timestamp,
+    };
+    switch (tab) {
+      case "equally":
+        addEqually(expenseInfo);
+        break;
+
+      case "unequally":
+        if (remainingAmount != 0) {
+          toast.error("Total doesn't add up!!");
+          return;
+        }
+        addUnequally(expenseInfo);
+        break;
+
+      case "percentages":
+        if (remainingPercent != 0) {
+          toast.error("Error in splitting!!");
+          return;
+        }
+        addPercentage(expenseInfo);
+        break;
+    }
+    setExpenseDesp("");
+    setTotalAmount(undefined);
+    setSplitInfo({
+      unequally: {},
+      percentage: {},
+    });
+  };
+
+  const addEqually = async (expenseInfo: ExpenseInfo) => {
+    try {
+      const groupRef = doc(db, "groups", id);
+      const amount = (totalAmount || 0) / groupInfo.members.length;
+
+      // Add to the group spending
+      await updateDoc(groupRef, {
+        groupSpending: increment(totalAmount || 0),
+      });
+
+      // Add to total share of each concerned user
+      // Create an object to hold the updates for Firestore
+      let updates: { [key: string]: any } = {};
+
+      // Loop over each email in the unequally object
+      groupInfo.members.forEach((email) => {
+        const summaryField = `summary.${email.replace(/\./g, "_")}.totalShare`; // Construct the field path dynamically
+
+        // Use computed property names to update the correct field
+        updates[summaryField] = increment(amount);
+      });
+      // Perform the update
+      await updateDoc(groupRef, updates);
+
+      // Add to total paid of person who paid
+      const summaryField = `summary.${user?.email.replace(
+        /\./g,
+        "_"
+      )}.totalPaid`;
+      await updateDoc(groupRef, {
+        [summaryField]: increment(totalAmount as number),
+      });
+
+      // Update total lent in the user doc of the person who paid
+      await updateDoc(doc(db, "users", user?.email as string), {
+        totalLent: increment(amount * (user?.friends.length as number)),
+      });
+
+      // Update the expense id in the user doc and group doc
+      groupInfo.members.forEach((email) => {
+        expenseInfo.split[email] = {
+          totalPaid: email === user?.email ? (totalAmount as number) : 0,
+          totalShare: amount,
+        };
+      });
+      const expenseInfoID = await addDoc(
+        collection(db, "expenses"),
+        expenseInfo
+      );
+
+      await updateDoc(groupRef, {
+        activities: arrayUnion(expenseInfoID.id),
+      });
+      // Get a new write batch
+      const batch = writeBatch(db);
+
+      // Update the group id to each user
+      groupInfo.members.forEach((email) => {
+        const sfRef = doc(db, "users", email);
+        batch.update(sfRef, { expenses: arrayUnion(expenseInfoID.id) });
+      });
+
+      // Commit the batch
+      await batch.commit();
+      toast.success("Expense added!!");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to add expense!!");
+      console.error(error);
+    }
+  };
+
+  const addUnequally = async (expenseInfo: ExpenseInfo) => {
+    try {
+      const groupRef = doc(db, "groups", id);
+
+      // Add to the group spending
+      await updateDoc(groupRef, {
+        groupSpending: increment(totalAmount || 0),
+      });
+
+      // Add to total share of each concerned user
+      // Create an object to hold the updates for Firestore
+      let updates: { [key: string]: any } = {};
+
+      // Loop over each email in the unequally object
+      Object.keys(splitInfo.unequally).forEach((email) => {
+        const summaryField = `summary.${email.replace(/\./g, "_")}.totalShare`; // Construct the field path dynamically
+
+        // Use computed property names to update the correct field
+        updates[summaryField] = increment(splitInfo.unequally[email] || 0);
+      });
+      // Perform the update
+      await updateDoc(groupRef, updates);
+
+      // Add to total paid of person who paid
+      const summaryField = `summary.${user?.email.replace(
+        /\./g,
+        "_"
+      )}.totalPaid`;
+      await updateDoc(groupRef, {
+        [summaryField]: increment(totalAmount || 0),
+      });
+
+      // Update total lent in the user doc of the person who paid
+      await updateDoc(doc(db, "users", user?.email as string), {
+        totalLent: increment(
+          (totalAmount as number) -
+            (splitInfo.unequally[user?.email || ""] || 0)
+        ),
+      });
+
+      // Update the expense id in the user doc and group doc
+      groupInfo.members.forEach((email) => {
+        expenseInfo.split[email] = {
+          totalPaid: email === user?.email ? (totalAmount as number) : 0,
+          totalShare: splitInfo.unequally[email],
+        };
+      });
+      const expenseInfoID = await addDoc(
+        collection(db, "expenses"),
+        expenseInfo
+      );
+
+      await updateDoc(groupRef, {
+        activities: arrayUnion(expenseInfoID.id),
+      });
+      // Get a new write batch
+      const batch = writeBatch(db);
+
+      // Update the group id to each user
+      groupInfo.members.forEach((email) => {
+        const sfRef = doc(db, "users", email);
+        batch.update(sfRef, { expenses: arrayUnion(expenseInfoID.id) });
+      });
+
+      // Commit the batch
+      await batch.commit();
+      toast.success("Expense added!!");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to add expense!!");
+      console.error(error);
+    }
+  };
+
+  const addPercentage = async (expenseInfo: ExpenseInfo) => {
+    try {
+      const groupRef = doc(db, "groups", id);
+
+      // Add to the group spending
+      await updateDoc(groupRef, {
+        groupSpending: increment(totalAmount || 0),
+      });
+
+      // Add to total share of each concerned user
+      // Create an object to hold the updates for Firestore
+      let updates: { [key: string]: any } = {};
+
+      // Loop over each email in the unequally object
+      Object.keys(splitInfo.percentage).forEach((email) => {
+        const summaryField = `summary.${email.replace(/\./g, "_")}.totalShare`; // Construct the field path dynamically
+
+        // Use computed property names to update the correct field
+        updates[summaryField] = increment(
+          (splitInfo.percentage[email] * (totalAmount as number)) / 100
+        );
+      });
+      // Perform the update
+      await updateDoc(groupRef, updates);
+
+      // Add to total paid of person who paid
+      const summaryField = `summary.${user?.email.replace(
+        /\./g,
+        "_"
+      )}.totalPaid`;
+      await updateDoc(groupRef, {
+        [summaryField]: increment(totalAmount as number),
+      });
+
+      // Update total lent in the user doc of the person who paid
+      await updateDoc(doc(db, "users", user?.email as string), {
+        totalLent: increment(
+          (totalAmount as number) -
+            ((splitInfo.percentage[user?.email || ""] *
+              (totalAmount as number)) /
+              100 || 0)
+        ),
+      });
+
+      // Update the expense id in the user doc and group doc
+      groupInfo.members.forEach((email) => {
+        expenseInfo.split[email] = {
+          totalPaid: email === user?.email ? (totalAmount as number) : 0,
+          totalShare:
+            (splitInfo.percentage[email] * (totalAmount as number)) / 100,
+        };
+      });
+      const expenseInfoID = await addDoc(
+        collection(db, "expenses"),
+        expenseInfo
+      );
+
+      await updateDoc(groupRef, {
+        activities: arrayUnion(expenseInfoID.id),
+      });
+      // Get a new write batch
+      const batch = writeBatch(db);
+
+      // Update the group id to each user
+      groupInfo.members.forEach((email) => {
+        const sfRef = doc(db, "users", email);
+        batch.update(sfRef, { expenses: arrayUnion(expenseInfoID.id) });
+      });
+
+      // Commit the batch
+      await batch.commit();
+      toast.success("Expense added!!");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to add expense!!");
+      console.error(error);
+    }
   };
 
   return (
@@ -94,22 +399,27 @@ const EXPENSE_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
               </div>
               <div>
                 <p className="mb-2">Amount</p>
-                <input
+                <Input
                   type="number"
-                  className=" border-b border-gray-300 outline-0 text-gray-900 text-sm block w-full py-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                   placeholder="Enter total amount"
-                  required
-                  value={totalAmount}
-                  onChange={(e) => {
-                    setTotalAmount(parseInt(e.target.value));
-                    setRemainingAmount(parseInt(e.target.value));
+                  value={`${totalAmount}`}
+                  onValueChange={(value) => {
+                    setTotalAmount(parseInt(value));
                   }}
+                  startContent={
+                    <div className="pointer-events-none flex items-center">
+                      <span className="text-default-400 text-small">
+                        &#8377;
+                      </span>
+                    </div>
+                  }
                 />
               </div>
               <div className="px-auto">
                 <Tabs
                   aria-label="Options"
                   color="success"
+                  selectedKey={tab}
                   onSelectionChange={(key) => handleTabs(key as string)}
                   classNames={{
                     base: "flex",
@@ -120,99 +430,134 @@ const EXPENSE_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
                   <Tab key="equally" title="Equally">
                     <Card>
                       <CardBody>
-                        <CheckboxGroup color="success" isDisabled>
-                          {user?.friends.map((item) => (
-                            <Checkbox key={item} value={item}>
-                              {item}
-                            </Checkbox>
-                          ))}
-                          {
-                            <Checkbox key={user?.email} value={user?.email}>
-                              {user?.email}
-                            </Checkbox>
-                          }
-                        </CheckboxGroup>
+                        {groupInfo.members.map((item) => (
+                          <div key={item} className="flex justify-between my-2">
+                            <User
+                              name="Jane Doe"
+                              description={item}
+                              avatarProps={{
+                                src: "https://i.pravatar.cc/150?u=a04258114e29026702d",
+                              }}
+                            />
+                            <Input
+                              isDisabled
+                              type="number"
+                              placeholder="0.00"
+                              classNames={{
+                                base: "w-[110px]",
+                              }}
+                              value={`${(
+                                (totalAmount || 0) / groupInfo.members.length
+                              ).toFixed(2)}`}
+                              endContent={
+                                <div className="pointer-events-none flex items-center">
+                                  <span className="text-default-400 text-small">
+                                    &#8377;
+                                  </span>
+                                </div>
+                              }
+                            />
+                          </div>
+                        ))}
                       </CardBody>
                     </Card>
                   </Tab>
                   <Tab key="unequally" title="Unequally">
                     <Card>
                       <CardBody>
-                        <p className="text-xl text-center text-teal-400 border-1 w-max mx-auto mb-6 px-6 rounded-full border-teal-500">
-                          {remainingAmount || 0}
-                        </p>
-                        <CheckboxGroup
-                          color="success"
-                          value={selected}
-                          onValueChange={setSelected}
+                        <p
+                          className={`text-xl text-center border-1 w-max mx-auto mb-6 px-6 rounded-full ${
+                            (remainingAmount || 0) < 0
+                              ? "text-orange-600 border-orange-900"
+                              : "text-teal-400 border-teal-500"
+                          } `}
                         >
-                          {user?.friends.map((item) => {
-                            return (
-                              <>
-                                <div className="flex justify-between">
-                                  <Checkbox key={item} value={item}>
-                                    {item}
-                                  </Checkbox>
-                                  {selected.includes(item || "") && (
-                                    <input
-                                      type="text"
-                                      className=" border-b border-gray-300 outline-0 text-gray-900 text-sm block w-[65px] py-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                                      placeholder="&#8377; 0.00"
-                                      required
-                                      value={splitInfo[item] || ""}
-                                      onChange={(e) =>
-                                        handleSplitUnequally(
-                                          item,
-                                          Number(e.target.value)
-                                        )
-                                      }
-                                    />
-                                  )}
+                          &#8377; {Math.abs(remainingAmount || 0)}{" "}
+                          <span className="text-sm">
+                            {(remainingAmount || 0) < 0 ? "over" : "left"}
+                          </span>
+                        </p>
+                        {groupInfo.members.map((item) => (
+                          <div key={item} className="flex justify-between my-2">
+                            <User
+                              name="Jane Doe"
+                              description={item}
+                              avatarProps={{
+                                src: "https://i.pravatar.cc/150?u=a04258114e29026702d",
+                              }}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              classNames={{
+                                base: "w-[120px]",
+                              }}
+                              value={`${splitInfo.unequally[item]}`}
+                              onValueChange={(value) =>
+                                handleSplitUnequally(item, parseInt(value))
+                              }
+                              startContent={
+                                <div className="pointer-events-none flex items-center">
+                                  <span className="text-default-400 text-small">
+                                    &#8377;
+                                  </span>
                                 </div>
-                              </>
-                            );
-                          })}
-                          {
-                            <>
-                              <div className="flex justify-between">
-                                <Checkbox key={user?.email} value={user?.email}>
-                                  {user?.email}
-                                </Checkbox>
-                                {selected.includes(user?.email || "") && (
-                                  <input
-                                    type="text"
-                                    id="company"
-                                    className=" border-b border-gray-300 outline-0 text-gray-900 text-sm block w-[65px] py-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="&#8377; 0.00"
-                                    required
-                                    value={splitInfo[user?.email || ""] || ""}
-                                    onChange={(e) =>
-                                      handleSplitUnequally(
-                                        user?.email || "",
-                                        Number(e.target.value)
-                                      )
-                                    }
-                                  />
-                                )}
-                              </div>
-                            </>
-                          }
-                        </CheckboxGroup>
+                              }
+                            />
+                          </div>
+                        ))}
                       </CardBody>
                     </Card>
                   </Tab>
                   <Tab key="percentages" title="By percentages">
                     <Card>
                       <CardBody>
-                        Excepteur sint occaecat cupidatat non proident, sunt in
-                        culpa qui officia deserunt mollit anim id est laborum.
+                        <p
+                          className={`text-xl text-center border-1 w-max mx-auto mb-6 px-6 rounded-full ${
+                            (remainingPercent || 0) < 0
+                              ? "text-orange-600 border-orange-900"
+                              : "text-teal-400 border-teal-500"
+                          } `}
+                        >
+                          {Math.abs(remainingPercent || 0)}
+                          {"% "}
+                          <span className="text-sm">
+                            {(remainingPercent || 0) < 0 ? "over" : "left"}
+                          </span>
+                        </p>
+                        {groupInfo.members.map((item) => (
+                          <div key={item} className="flex justify-between my-2">
+                            <User
+                              name="Jane Doe"
+                              description={item}
+                              avatarProps={{
+                                src: "https://i.pravatar.cc/150?u=a04258114e29026702d",
+                              }}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              classNames={{
+                                base: "w-[120px]",
+                              }}
+                              value={`${splitInfo.percentage[item]}`}
+                              onValueChange={(value) =>
+                                handleSplitPercentage(item, parseInt(value))
+                              }
+                              endContent={
+                                <div className="pointer-events-none flex items-center">
+                                  <span className="text-default-400 text-small">
+                                    %
+                                  </span>
+                                </div>
+                              }
+                            />
+                          </div>
+                        ))}
                       </CardBody>
                     </Card>
                   </Tab>
                 </Tabs>
-              </div>
-              <div>
-                <p className="mb-2">Add members</p>
               </div>
             </ModalBody>
             <ModalFooter>

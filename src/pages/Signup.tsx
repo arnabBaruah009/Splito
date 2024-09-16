@@ -63,7 +63,7 @@ const Signup = () => {
         totalBorrowed: 0,
         groups: [],
         expenses: [],
-        friends: [],
+        friends: [values.email],
       });
       setUserID(values.email);
       setValues({
