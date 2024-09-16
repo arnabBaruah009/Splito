@@ -52,6 +52,7 @@ export type GroupInfo = {
 
 // Expense info type
 export type ExpenseInfo = {
+  desc: string;
   paidBy: string;
   amount: number;
   groupID: string;
