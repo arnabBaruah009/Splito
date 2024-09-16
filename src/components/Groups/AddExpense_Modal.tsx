@@ -95,13 +95,13 @@ const EXPENSE_MODAL = ({ isOpen, onClose, id, groupInfo }: GroupModalprops) => {
 
   // Update balance
   useEffect(() => {
-    setRemainingAmount((prev) => {
+    setRemainingAmount(() => {
       const total = Object.keys(splitInfo.unequally).reduce((acc, key) => {
         return acc + (splitInfo.unequally[key] || 0);
       }, 0);
       return (totalAmount || 0) - total;
     });
-    setRemainingPercent((prev) => {
+    setRemainingPercent(() => {
       const total = Object.keys(splitInfo.percentage).reduce((acc, key) => {
         return acc + (splitInfo.percentage[key] || 0);
       }, 0);
@@ -117,7 +117,8 @@ const EXPENSE_MODAL = ({ isOpen, onClose, id, groupInfo }: GroupModalprops) => {
     }
     const expenseInfo: ExpenseInfo = {
       desc: expenseDesp,
-      paidBy: user?.email || "",
+      paidByEmail: user?.email || "",
+      paidByName: user?.displayName || "",
       amount: totalAmount || 0,
       groupID: id,
       split: {},

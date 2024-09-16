@@ -23,8 +23,8 @@ const Group = ({ id }: { id: string }) => {
     const unsub = onSnapshot(doc(db, "groups", id), (group) => {
       group.exists() && setGroupInfo(group.data() as GroupInfo);
       setoverallAmt(
-        (groupInfo.summary?.[user?.email || ""]?.totalPaid || 0) -
-          (groupInfo.summary?.[user?.email || ""]?.totalShare || 0)
+        (groupInfo.summary?.[user?.email.replace(/\./g, "_") || ""]?.totalPaid || 0) -
+          (groupInfo.summary?.[user?.email.replace(/\./g, "_") || ""]?.totalShare || 0)
       );
     });
 
