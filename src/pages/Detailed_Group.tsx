@@ -95,7 +95,7 @@ const Detailed_Group = () => {
       </div>
       {/* Activities */}
       <div></div>
-      <EXPENSE_MODAL isOpen={isOpen} onClose={onClose} />
+      <EXPENSE_MODAL isOpen={isOpen} onClose={onClose} id={id as string} />
     </div>
   );
 };
