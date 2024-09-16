@@ -33,7 +33,7 @@ const GROUP_MODAL = ({ isOpen, onClose }: GroupModalprops) => {
     // Get a new write batch
     const batch = writeBatch(db);
 
-    // Update the population of 'SF'
+    // Update the group id to each user
     selected.forEach((user) => {
       const sfRef = doc(db, "users", user);
       batch.update(sfRef, { groups: arrayUnion(id) });
