@@ -1,12 +1,45 @@
-import { ActivityInfo } from "../../types";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from "../../firebase";
+import { useUser } from "../../hooks/useUser";
+import { ActivityInfo, ExpenseInfo } from "../../types";
 
-const ActivityItem = ({
-  activity,
-  end,
-}: {
-  activity: ActivityInfo;
-  end: boolean;
-}) => {
+const ActivityItem = ({ id, end }: { id: string; end: boolean }) => {
+  const { user } = useUser();
+  const [activityInfo, setActivityInfo] = useState<ActivityInfo>({
+    id: "",
+    paidByEmail: "",
+    paidByName: "",
+    amount: 0,
+    type: "borrowed",
+    date: "",
+    borrowed: 0,
+    lent: 0,
+  });
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "expenses", id), (expense) => {
+      if (expense.exists()) {
+        const data: ExpenseInfo = expense.data() as ExpenseInfo;
+        setActivityInfo({
+          id: id,
+          paidByEmail: data.paidByEmail,
+          paidByName: data.paidByName,
+          amount: data.amount,
+          type: !Object.keys(data.split).includes(user?.email as string)
+            ? "uninvolved"
+            : user?.email !== data.paidByEmail
+            ? "borrowed"
+            : "lent",
+          date: "",
+          borrowed: data.split[user?.email as string].totalShare,
+          lent: data.split[user?.email as string].totalShare,
+        });
+      }
+    });
+
+    return unsub;
+  }, []);
+
   return (
     <li>
       <div className="relative pb-8">
@@ -20,7 +53,11 @@ const ActivityItem = ({
           <div>
             <span
               className={`h-8 w-8 rounded-full ${
-                activity.type === "borrowed" ? "bg-red-400" : "bg-green-400"
+                activityInfo.type === "borrowed"
+                  ? "bg-red-400"
+                  : activityInfo.type === "uninvolved"
+                  ? "bg-cyan-200"
+                  : "bg-green-400"
               } flex items-center justify-center`}
             >
               <svg
@@ -40,17 +77,17 @@ const ActivityItem = ({
           <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
             <div>
               <p className="text-sm text-gray-500">
-                {activity.userName} paid {activity.amount}
+                {activityInfo.paidByName} paid {activityInfo.amount}
                 {", "}
                 <a
                   href="#"
                   className={`font-medium ${
-                    activity.type === "borrowed"
+                    activityInfo.type === "borrowed"
                       ? "text-red-400"
                       : "text-green-400"
                   }`}
                 >
-                  You {activity.type} 50
+                  You {activityInfo.type} 50
                 </a>
               </p>
             </div>
